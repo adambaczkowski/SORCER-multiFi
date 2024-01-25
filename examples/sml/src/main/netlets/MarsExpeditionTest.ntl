@@ -36,3 +36,44 @@ Task launchRocket = task("launchRocket", sig("launchRocket", ExpeditionScheduler
 // Service Composition: Expedition Plan Creation, Simulation Preparation, and Rocket Launch
 job("marsExpeditionJob",
         createExpeditionPlan, prepareSimulation, launchRocket, strategy(Monitor.YES));
+
+
+// Monitor Life Support Data
+Task initLifeSupportMonitoringSystem = task("initLifeSuportMonitoringSystem", sig("initLifeSuportMonitoringSystem", LifeSupportSystemsService.class),
+        context("lifeSupportMonitoring", inVal("monitorOxygenLevels"), inVal("controlCO2scrubbing"), inVal("manageWaterRecycling"), inVal("regulateTemperatureAndHumidity")
+                outVal("lifeSupportMonitoring/status")), strategy(Monitor.YES));
+
+// Check oxygen level
+Task checkOxygenLevel = task("checkOxygenLevel", sig("checkOxygenLevel", LifeSupportSystemsService.class),
+        context("lifeSupportMonitoring", outVal("lifeSupportMonitoring/oxygenLevels")),
+        strategy(Monitor.YES));
+
+// Regulate temperature and humidity
+Task regulateTemperatureAndHumidity = task("regulateTemperatureAndHumidity", sig("launchRocket", LifeSupportSystemsService.class),
+        context("lifeSupportMonitoring", inVal("temperatureAndHumidityValues"),
+                outVal("lifeSupportMonitoring/temperatureHumidityStatus")), strategy(Monitor.YES));
+
+// Service Composition: Initiate life support system, Check oxygen levels, Regulate temperature and humidity
+job("monitorLifeSupportDataJob",
+        initLifeSupportMonitoringSystem, checkOxygenLevel, regulateTemperatureAndHumidity, strategy(Monitor.YES));
+
+// Propulsions Control System
+Task initPropulsionsControlSystem = task("initPropulsionsControlSystem", sig("initPropulsionsControlSystem", PropulsionSystemsControlService.class),
+        context("propulsionsControl", inVal("propulsionStartUpDetails"),
+                outVal("propulsionsControl/status")), strategy(Monitor.YES));
+
+// Adjust thrust
+Task adjustThrust = task("adjustThrust", sig("adjustThrust", PropulsionSystemsControlService.class),
+        context("propulsionsControl", inVal("thrustValues"),
+          outVal("propulsionsControl/status")),strategy(Monitor.YES));
+
+// Adjust trajectory
+Task adjustTrajectory = task("adjustTrajectory", sig("adjustTrajectory", PropulsionSystemsControlService.class),
+        context("propulsionsControl", inVal("trajectoryValues"),
+                outVal("propulsionsControl/status")), strategy(Monitor.YES));
+
+// Service Composition: Initiate propulsions control system, Adjust Thrust, Adjust Trajectory
+job("controlPropulsionsSystem",
+        initPropulsionsControlSystem, adjustThrust, adjustTrajectory, strategy(Monitor.YES));
+
+
